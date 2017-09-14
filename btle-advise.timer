@@ -1,0 +1,6 @@
+[Unit]
+Description=Ensure BLE advise is up
+
+[Timer]
+AccuracySec=1min
+OnUnitActiveSec=1min

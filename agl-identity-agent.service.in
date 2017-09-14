@@ -1,5 +1,6 @@
 [Unit]
 Description=AGL identity agent
+Requires=btle-advise.service
 
 [Service]
 User=root

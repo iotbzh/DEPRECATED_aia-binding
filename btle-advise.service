@@ -1,0 +1,8 @@
+[Unit]
+Description=activates advertising of BlueTooth Low-Energy on hci0
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash -c "rfkill list|sed '/[bB]luetooth/!d;s/:.*//'|xargs -n1 rfkill unblock"
+ExecStart=/bin/bash -c "hcitool dev|tail -n+2|cut -f2|xargs -n1 -IX hciconfig X leadv"
+

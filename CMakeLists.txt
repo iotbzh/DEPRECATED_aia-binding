@@ -58,6 +58,8 @@ configure_file(agl-identity-agent.service.in agl-identity-agent.service @ONLY)
 
 INSTALL(FILES
     ${CMAKE_CURRENT_BINARY_DIR}/agl-identity-agent.service
+    ${CMAKE_CURRENT_SOURCE_DIR}/btle-advise.service
+    ${CMAKE_CURRENT_SOURCE_DIR}/btle-advise.timer
     DESTINATION
     ${PROJECT_DESTINATION}
     )
