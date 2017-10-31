@@ -26,22 +26,14 @@
 #include <sys/stat.h>
 
 #include <json-c/json.h>
-#include <systemd/sd-bus.h>
 
 #define AFB_BINDING_VERSION 2
 #include <afb/afb-binding.h>
 
 #include "oidc-agent.h"
 #include "aia-get.h"
-#include "aia-uds-bluez.h"
-
-#if !defined(AUTO_START_ADVISE)
-#define AUTO_START_ADVISE 1
-#endif
 
 static int expiration_delay = 5;
-
-static int advising;
 
 static struct afb_event event;
 
@@ -52,7 +44,6 @@ static const char default_vin[] = "4T1BF1FK5GU260429";
 static const char *oidc_name;
 static char *vin;
 static char *endpoint;
-static int autoadvise = AUTO_START_ADVISE;
 
 /***** configuration ********************************************/
 
@@ -127,7 +118,6 @@ static void setconfig(struct json_object *conf)
 	confsetstr(conf, "endpoint", &endpoint, endpoint ? : default_endpoint);
 	confsetstr(conf, "vin", &vin, vin ? : default_vin);
 	confsetint(conf, "delay", &expiration_delay, expiration_delay);
-	confsetint(conf, "autoadvise", &autoadvise, autoadvise);
 	confsetoidc(conf, "oidc-aia");
 }
 
@@ -252,50 +242,6 @@ static void upload_request(const char *address)
 		AFB_ERROR("out of memory");
 }
 
-static void on_uds_change(const struct aia_uds *uds)
-{
-	AFB_INFO("UDS changed"
-		" first-name%s[%.*s]"
-		" last-name%s[%.*s]"
-		" email%s[%.*s]"
-		" language%s[%.*s]",
-		uds->first_name.changed ? "*" : "", (int)uds->first_name.length, uds->first_name.data ?:"",
-		uds->last_name.changed ? "*" : "", (int)uds->last_name.length, uds->last_name.data ?:"",
-		uds->email.changed ? "*" : "", (int)uds->email.length, uds->email.data ?:"",
-		uds->language.changed ? "*" : "", (int)uds->language.length, uds->language.data ?:"");
-	if (uds->email.changed) {
-		upload_request(uds->email.data);
-		send_event_object("incoming", uds->email.data, uds->email.data);
-	}
-}
-
-static void advise (struct afb_req request)
-{
-	int rc;
-
-	if (!advising) {
-		rc = aia_uds_advise(1, NULL, NULL);
-		if (rc < 0) {
-/*
-TODO: solve the issue
-			afb_req_fail(request, "failed", "start scan failed");
-			return;
-*/
-			AFB_ERROR("Ignoring scan start failed, because probably already in progress");
-		}
-		advising = 1;
-	}
-	afb_req_success(request, NULL, NULL);
-}
-
-
-static void unadvise (struct afb_req request)
-{
-	aia_uds_advise(0, NULL, NULL);
-	advising = 0;
-	afb_req_success(request, NULL, NULL);
-}
-
 static void subscribe (struct afb_req request)
 {
 	int rc;
@@ -336,17 +282,7 @@ static void success (struct afb_req request)
 
 static int service_init()
 {
-	sd_bus *bus;
 	int rc;
-
-	bus = afb_daemon_get_system_bus();
-	rc = bus ? aia_uds_init(bus) : -ENOTSUP;	
-	if (rc < 0) {
-		errno = -rc;
-		return -1;
-	}
-
-	aia_uds_set_on_change(on_uds_change);
 
 	event = afb_daemon_make_event("event");
 	if (!afb_event_is_valid(event))
@@ -354,8 +290,7 @@ static int service_init()
 
 	readconfig();
 
-	rc = aia_uds_advise(autoadvise, NULL, NULL);
-	return rc < 0 ? rc : 0;
+	return 0;
 }
 
 
@@ -368,18 +303,14 @@ static const struct afb_verb_v2 verbs[]=
   {"login"      , login        , NULL, "log a user in"           , AFB_SESSION_NONE },
   {"logout"     , logout       , NULL, "log the current user out", AFB_SESSION_NONE },
   {"get"        , get          , NULL, "get data"                , AFB_SESSION_NONE },
-  {"advise"     , advise       , NULL, "start advising uds"      , AFB_SESSION_NONE },
-  {"unadvise"   , unadvise     , NULL, "stop advising uds"       , AFB_SESSION_NONE },
-  {"scan"       , success      , NULL, "legacy"                  , AFB_SESSION_NONE },
-  {"unscan"     , success      , NULL, "legacy"                  , AFB_SESSION_NONE },
   {NULL}
 };
 
 const struct afb_binding_v2 afbBindingV2 =
 {
-	.api = "agl-identity-agent",
+	.api = "identity",
 	.specification = NULL,
-	.info = "AGL identity agent service",
+	.info = "AGL identity service",
 	.verbs = verbs,
 	.preinit = NULL,
 	.init = service_init,

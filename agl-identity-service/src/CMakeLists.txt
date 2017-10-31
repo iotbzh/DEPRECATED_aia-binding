@@ -1,5 +1,5 @@
 ###########################################################################
-# Copyright 2016 IoT.bzh
+# Copyright 2016, 2017 IoT.bzh
 #
 # author: José Bollo <jose.bollo@iot.bzh>
 # author: Stéphane Desneux <stephane.desneux@iot.bzh>
@@ -17,37 +17,26 @@
 # limitations under the License.
 ###########################################################################
 
-cmake_minimum_required(VERSION 3.3)
+PROJECT_TARGET_ADD(afb-identity-binding)
 
-###########################################################################
-
-include(FindPkgConfig)
-
-pkg_check_modules(EXTRAS REQUIRED json-c afb-daemon libcurl systemd)
-add_compile_options(${EXTRAS_CFLAGS} -DFOR_AFB_BINDING)
-include_directories(${EXTRAS_INCLUDE_DIRS})
-link_libraries(${EXTRAS_LIBRARIES})
-
-add_library(${PROJECT_NAME} MODULE
+add_library(afb-identity-binding MODULE
 	agl-identity-binding.c
 	aia-get.c
-	aia-uds-bluez.c
 	authorization.c
 	base64.c
 	curl-wrap.c
 	escape.c
 	oidc-agent.c
 )
-set_target_properties(${PROJECT_NAME} PROPERTIES
+
+pkg_check_modules(EXTRAS REQUIRED json-c afb-daemon libcurl)
+
+set_target_properties(afb-identity-binding PROPERTIES
+        LABELS "BINDING"
 	PREFIX ""
-	LINK_FLAGS "-Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/export.map"
+	COMPILE_FLAGS "${EXTRAS_CFLAGS} -DFOR_AFB_BINDING"
+        LINK_FLAGS "${BINDINGS_LINK_FLAG}"
+	LINK_LIBRARIES "${EXTRAS_LIBRARIES}"
+        OUTPUT_NAME "${TARGET_NAME}"
 )
-
-install(TARGETS ${PROJECT_NAME} DESTINATION ${PROJECT_DESTINATION})
-
-INSTALL(FILES
-    ${CMAKE_CURRENT_SOURCE_DIR}/config.json
-    DESTINATION
-    ${PROJECT_DESTINATION}
-    )
 
