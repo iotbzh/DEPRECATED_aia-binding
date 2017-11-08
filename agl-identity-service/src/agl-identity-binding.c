@@ -176,7 +176,7 @@ static void do_logout()
 
 /****************************************************************/
 
-static char *get_upload_url(const char *key)
+static char *get_download_url(const char *key)
 {
 	int rc;
 	char *result;
@@ -185,7 +185,7 @@ static char *get_upload_url(const char *key)
 	return rc >= 0 ? result : NULL;
 }
 
-static void uploaded(void *closure, int status, const void *buffer, size_t size)
+static void downloaded(void *closure, int status, const void *buffer, size_t size)
 {
 	struct json_object *object, *subobj;
 	char *url = closure;
@@ -227,17 +227,19 @@ static void uploaded(void *closure, int status, const void *buffer, size_t size)
 		goto end;
 	}
 
+	// TODO: save the object into the database
+
 	do_login(subobj);
 	json_object_put(object);
 end:
 	free(url);
 }
 
-static void upload_request(const char *address)
+static void download_request(const char *address)
 {
-	char *url = get_upload_url(address);
+	char *url = get_download_url(address);
 	if (url)
-		aia_get(url, expiration_delay, oidc_name, oidc_name, uploaded, url);
+		aia_get(url, expiration_delay, oidc_name, oidc_name, downloaded, url);
 	else
 		AFB_ERROR("out of memory");
 }
