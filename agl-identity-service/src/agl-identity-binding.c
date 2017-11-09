@@ -91,7 +91,7 @@ static void setconfig(struct json_object *conf)
 {
 	if (conf) {
 		confsetstr(conf, "vin", &vin, vin ? : default_vin);
-		aglfr_setconfig(conf);
+		agl_forgerock_setconfig(conf);
 	}
 }
 
