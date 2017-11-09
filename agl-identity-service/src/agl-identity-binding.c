@@ -171,11 +171,6 @@ static void unsubscribe (struct afb_req request)
 	afb_req_success(request, NULL, NULL);
 }
 
-static void login (struct afb_req request)
-{
-	afb_req_fail(request, "not-implemented-yet", NULL);
-}
-
 static void logout (struct afb_req request)
 {
 	do_logout();
@@ -213,7 +208,6 @@ static const struct afb_verb_v2 verbs[]=
 {
   {"subscribe"  , subscribe    , NULL, "subscribe to events"     , AFB_SESSION_NONE },
   {"unsubscribe", unsubscribe  , NULL, "unsubscribe to events"   , AFB_SESSION_NONE },
-  {"login"      , login        , NULL, "log a user in"           , AFB_SESSION_NONE },
   {"logout"     , logout       , NULL, "log the current user out", AFB_SESSION_NONE },
   {"get"        , get          , NULL, "get data"                , AFB_SESSION_NONE },
   {NULL}
