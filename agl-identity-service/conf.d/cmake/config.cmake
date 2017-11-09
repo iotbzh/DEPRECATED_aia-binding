@@ -45,7 +45,6 @@ set(PROJECT_APP_TEMPLATES_DIR "../conf.d/app-templates")
 
 # Compilation Mode (DEBUG, RELEASE)
 # ----------------------------------
-set(CMAKE_BUILD_TYPE "DEBUG")
 set(USE_EFENCE 1)
 
 # Kernel selection if needed. You can choose between a
