@@ -21,6 +21,7 @@ PROJECT_TARGET_ADD(afb-identity-binding)
 
 add_library(afb-identity-binding MODULE
 	agl-identity-binding.c
+	agl-forgerock.c
 	aia-get.c
 	authorization.c
 	base64.c

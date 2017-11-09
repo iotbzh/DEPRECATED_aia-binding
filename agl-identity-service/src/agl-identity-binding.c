@@ -30,10 +30,7 @@
 #define AFB_BINDING_VERSION 2
 #include <afb/afb-binding.h>
 
-#include "oidc-agent.h"
-#include "aia-get.h"
-
-static int expiration_delay = 5;
+#include "agl-forgerock.h"
 
 static struct afb_event event;
 
@@ -93,32 +90,12 @@ static void confsetstr(struct json_object *conf, const char *name, char **value,
 	}
 }
 
-static void confsetint(struct json_object *conf, const char *name, int *value, int def)
-{
-	struct json_object *v;
-
-	*value = conf && json_object_object_get_ex(conf, name, &v) ? json_object_get_int(v) : def;
-}
-
-static void confsetoidc(struct json_object *conf, const char *name)
-{
-	struct json_object *idp, *appli;
-
-	if (conf
-	 && json_object_object_get_ex(conf, "idp", &idp)
-	 && json_object_object_get_ex(conf, "appli", &appli)) {
-		if (oidc_idp_set(name, idp) && oidc_appli_set(name, name, appli, 1)) {
-			oidc_name = name;
-		}
-	}
-}
-
 static void setconfig(struct json_object *conf)
 {
-	confsetstr(conf, "endpoint", &endpoint, endpoint ? : default_endpoint);
-	confsetstr(conf, "vin", &vin, vin ? : default_vin);
-	confsetint(conf, "delay", &expiration_delay, expiration_delay);
-	confsetoidc(conf, "oidc-aia");
+	if (conf) {
+		confsetstr(conf, "vin", &vin, vin ? : default_vin);
+		aglfr_setconfig(conf);
+	}
 }
 
 static void readconfig()
@@ -174,75 +151,14 @@ static void do_logout()
 	send_event_object("logout", "null", 0);
 }
 
+static void on_forgerock_data(struct json_object *data, const char *error)
+{
+	if (error) {
+	} else {
+	}
+}
+
 /****************************************************************/
-
-static char *get_download_url(const char *key)
-{
-	int rc;
-	char *result;
-
-	rc = asprintf(&result, "%s?vin=%s&keytoken=%s", endpoint, vin, key);
-	return rc >= 0 ? result : NULL;
-}
-
-static void downloaded(void *closure, int status, const void *buffer, size_t size)
-{
-	struct json_object *object, *subobj;
-	char *url = closure;
-
-	/* checks whether discarded */
-	if (status == 0 && !buffer)
-		goto end; /* discarded */
-
-	/* scan for the status */
-	if (status == 0 || !buffer) {
-		AFB_ERROR("uploading %s failed %s", url ? : "?", (const char*)buffer ? : "");
-		goto end;
-	}
-
-	/* get the object */
-	AFB_DEBUG("received data: %.*s", (int)size, (char*)buffer);
-	object = json_tokener_parse(buffer); /* okay because 0 appended */
-
-	/* extract useful part */
-	subobj = NULL;
-	if (object && !json_object_object_get_ex(object, "results", &subobj))
-		subobj = NULL;
-	if (subobj)
-		subobj = json_object_array_get_idx(subobj, 0);
-	if (subobj && !json_object_object_get_ex(subobj, "data", &subobj))
-		subobj = NULL;
-	if (subobj)
-		subobj = json_object_array_get_idx(subobj, 0);
-	if (subobj && !json_object_object_get_ex(subobj, "row", &subobj))
-		subobj = NULL;
-	if (subobj)
-		subobj = json_object_array_get_idx(subobj, 0);
-
-	/* is it a recognized user ? */
-	if (!subobj) {
-		/* not recognized!! */
-		AFB_INFO("unrecognized key for %s", url ? : "?");
-		json_object_put(object);
-		goto end;
-	}
-
-	// TODO: save the object into the database
-
-	do_login(subobj);
-	json_object_put(object);
-end:
-	free(url);
-}
-
-static void download_request(const char *address)
-{
-	char *url = get_download_url(address);
-	if (url)
-		aia_get(url, expiration_delay, oidc_name, oidc_name, downloaded, url);
-	else
-		AFB_ERROR("out of memory");
-}
 
 static void subscribe (struct afb_req request)
 {
@@ -286,6 +202,7 @@ static int service_init()
 {
 	int rc;
 
+	agl_forgerock_setcb(on_forgerock_data);
 	event = afb_daemon_make_event("event");
 	if (!afb_event_is_valid(event))
 		return -1;
