@@ -16,17 +16,8 @@
  */
 #define _GNU_SOURCE
 
-/*
-#include <errno.h>
-#include <stdint.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <string.h>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-*/
 #include <stdio.h>
+#include <string.h>
 
 #include <json-c/json.h>
 
@@ -161,7 +152,7 @@ void agl_forgerock_download_request(const char *vin, const char *kind, const cha
 	int rc;
 	char *url;
 
-	rc = asprintf(&result, "%s?vin=%s&kind=%s&keytoken=%s", endpoint, vin, kind, key);
+	rc = asprintf(&url, "%s?vin=%s&kind=%s&keytoken=%s", endpoint, vin, kind, key);
 	if (rc >= 0)
 		aia_get(url, expiration_delay, oidc_name, oidc_name, downloaded, url);
 	else
