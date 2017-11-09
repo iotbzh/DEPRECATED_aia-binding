@@ -30,7 +30,7 @@ add_library(afb-identity-binding MODULE
 	oidc-agent.c
 )
 
-pkg_check_modules(EXTRAS REQUIRED json-c afb-daemon libcurl)
+pkg_check_modules(EXTRAS REQUIRED libcurl)
 
 set_target_properties(afb-identity-binding PROPERTIES
         LABELS "BINDING"
