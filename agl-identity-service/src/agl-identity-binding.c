@@ -36,11 +36,8 @@ static struct afb_event event;
 
 static struct json_object *current_identity;
 
-static const char default_endpoint[] = "https://agl-graphapi.forgerocklabs.org/getuserprofilefromtoken";
 static const char default_vin[] = "4T1BF1FK5GU260429";
-static const char *oidc_name;
 static char *vin;
-static char *endpoint;
 
 /***** configuration ********************************************/
 
