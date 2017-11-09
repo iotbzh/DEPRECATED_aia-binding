@@ -140,6 +140,7 @@ void agl_forgerock_setconfig(struct json_object *conf)
 	confsetstr(conf, "endpoint", &endpoint, endpoint ? : default_endpoint);
 	confsetint(conf, "delay", &expiration_delay, expiration_delay);
 	confsetoidc(conf, "oidc-aia");
+	AFB_NOTICE("Forgerock endpoint is: %s", endpoint);
 }
 
 void agl_forgerock_setcb(void (*callback)(struct json_object *data, const char *error))

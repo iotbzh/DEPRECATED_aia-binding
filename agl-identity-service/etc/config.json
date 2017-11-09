@@ -1,6 +1,6 @@
 {
- "endpoint": "https://agl-graphapi.forgerocklabs.org/getuserprofilefromtoken",
- "vin": "4T1BF1FK5GU260429",
+ "endpoint": "https://agl-graphapi.forgerocklabs.org:443/getuserprofilefromtoken",
+ "vin": "WVGGF7BP7HD005986",
  "autoadvise": true,
  "delay": 5,
  "idp": {

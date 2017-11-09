@@ -50,7 +50,12 @@ static struct json_object *readjson(int fd)
 		buffer = alloca((size_t)(s.st_size)+1);
 		if (read(fd, buffer, (size_t)s.st_size) == (ssize_t)s.st_size) {
 			buffer[s.st_size] = 0;
+			//AFB_NOTICE("Config file: %s", buffer);
 			result = json_tokener_parse(buffer);
+			//if (!result)
+			//{
+			//	AFB_ERROR("Config file is not a valid JSON: %s", json_tokener_error_desc(json_tokener_get_error(NULL)));
+			//}
 		}
 	}
 	close(fd);
@@ -61,6 +66,7 @@ static struct json_object *readjson(int fd)
 static struct json_object *get_global_config(const char *name, const char *locale)
 {
 	int fd = afb_daemon_rootdir_open_locale(name, O_RDONLY, locale);
+	if (fd < 0) AFB_ERROR("Config file not found: %s", name);
 	return fd < 0 ? NULL : readjson(fd);
 }
 
@@ -94,7 +100,7 @@ static void setconfig(struct json_object *conf)
 
 static void readconfig()
 {
-	setconfig(get_global_config("config.json", NULL));
+	setconfig(get_global_config("etc/config.json", NULL));
 	setconfig(get_local_config("/etc/agl/identity-agent-config.json"));
 	setconfig(get_local_config("config.json"));
 }
@@ -187,6 +193,23 @@ static void success (struct afb_req request)
 	afb_req_success(request, NULL, NULL);
 }
 
+static void on_nfc_subscribed(void *closure, int status, struct json_object *result)
+{
+	if(!status)
+	{
+	}
+	else AFB_ERROR("Failed to subscribe to nfc events.");
+}
+
+static void on_nfc_started(void *closure, int status, struct json_object *result)
+{
+	if (!status)
+	{
+		afb_service_call("nfc", "subscribe", NULL, on_nfc_subscribed, NULL);
+	}
+	else AFB_ERROR("Failed to start nfc polling.");
+}
+
 static int service_init()
 {
 	int rc;
@@ -198,9 +221,38 @@ static int service_init()
 
 	readconfig();
 
+	if (afb_daemon_require_api("nfc", 1))
+		return -1;
+
+	afb_service_call("nfc", "start", NULL, on_nfc_started, NULL);
+
 	return 0;
 }
 
+static void on_nfc_target_add(struct json_object *object)
+{
+	struct json_object * json_uid;
+	char *uid;
+
+	if (json_object_object_get_ex(object, "UID", &json_uid))
+	{
+		uid = json_object_get_string(json_uid);
+		AFB_NOTICE("nfc tag detected, call forgerock with vincode=%s and key=%s", vin ? vin : default_vin, uid);
+		agl_forgerock_download_request(vin ? vin : default_vin, "nfc", uid);
+	}
+	else AFB_ERROR("nfc target add event is received but no UID found: %s", json_object_to_json_string(object));
+}
+
+static void onevent(const char *event, struct json_object *object)
+{
+	AFB_NOTICE("Received event: %s", event);
+	if (!strcmp("nfc/on-nfc-target-add", event))
+	{
+		on_nfc_target_add(object);
+		return;
+	}
+	AFB_WARNING("Unhandled event: %s", event);
+}
 
 // NOTE: this sample does not use session to keep test a basic as possible
 //       in real application most APIs should be protected with AFB_SESSION_CHECK
@@ -221,7 +273,7 @@ const struct afb_binding_v2 afbBindingV2 =
 	.verbs = verbs,
 	.preinit = NULL,
 	.init = service_init,
-	.onevent = NULL,
+	.onevent = onevent,
 	.noconcurrency = 0
 };
 
