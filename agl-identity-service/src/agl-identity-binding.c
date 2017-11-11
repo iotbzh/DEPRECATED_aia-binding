@@ -240,6 +240,7 @@ static void on_nfc_target_add(struct json_object *object)
 	{
 		uid = json_object_get_string(json_uid);
 		AFB_NOTICE("nfc tag detected, call forgerock with vincode=%s and key=%s", vin ? vin : default_vin, uid);
+		send_event_object("incoming", uid, uid);
 		agl_forgerock_download_request(vin ? vin : default_vin, "nfc", uid);
 	}
 	else AFB_ERROR("nfc target add event is received but no UID found: %s", json_object_to_json_string(object));
