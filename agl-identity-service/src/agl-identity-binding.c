@@ -185,6 +185,15 @@ static void logout (struct afb_req request)
 	afb_req_success(request, NULL, NULL);
 }
 
+static void fake_login (struct afb_req request)
+{
+	struct json_object *desc = afb_req_json(request);
+	do_logout();
+	if (desc)
+		do_login(desc);
+	afb_req_success(request, NULL, NULL);
+}
+
 static void get (struct afb_req request)
 {
 	afb_req_success(request, json_object_get(current_identity), NULL);
@@ -262,6 +271,7 @@ static const struct afb_verb_v2 verbs[]=
 {
   {"subscribe"  , subscribe    , NULL, "subscribe to events"     , AFB_SESSION_NONE },
   {"unsubscribe", unsubscribe  , NULL, "unsubscribe to events"   , AFB_SESSION_NONE },
+  {"fake-login" , fake_login   , NULL, "fake a login"            , AFB_SESSION_NONE },
   {"logout"     , logout       , NULL, "log the current user out", AFB_SESSION_NONE },
   {"get"        , get          , NULL, "get data"                , AFB_SESSION_NONE },
   {NULL}
