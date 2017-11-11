@@ -154,7 +154,9 @@ static void do_logout()
 static void on_forgerock_data(struct json_object *data, const char *error)
 {
 	if (error) {
+		ERROR("Can't get data: %s", error);
 	} else {
+		do_login(data);
 	}
 }
 
