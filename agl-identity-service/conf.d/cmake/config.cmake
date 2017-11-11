@@ -148,14 +148,14 @@ set(WIDGET_CONFIG_TEMPLATE ${CMAKE_CURRENT_SOURCE_DIR}/conf.d/wgt/config.xml.in 
 #	content.src designates the relative path of the binary.
 #	For such application, only security setup is made.
 #
-set(WIDGET_TYPE application/vnd.agl.native)
+set(WIDGET_TYPE application/vnd.agl.service)
 
 # Mandatory Widget entry point file of the main unit
 # --------------------------------------------------------------
 # This is the file that will be executed, loaded,
 # at launch time by the application framework.
 #
-set(WIDGET_ENTRY_POINT irrelevant)
+set(WIDGET_ENTRY_POINT config.xml)
 
 # Optional dependencies order
 # ---------------------------
