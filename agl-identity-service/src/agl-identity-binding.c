@@ -154,7 +154,7 @@ static void do_logout()
 static void on_forgerock_data(struct json_object *data, const char *error)
 {
 	if (error) {
-		ERROR("Can't get data: %s", error);
+		AFB_ERROR("Can't get data: %s", error);
 	} else {
 		do_login(data);
 	}
@@ -199,32 +199,23 @@ static void get (struct afb_req request)
 	afb_req_success(request, json_object_get(current_identity), NULL);
 }
 
-static void success (struct afb_req request)
-{
-	afb_req_success(request, NULL, NULL);
-}
-
 static void on_nfc_subscribed(void *closure, int status, struct json_object *result)
 {
-	if(!status)
-	{
-	}
-	else AFB_ERROR("Failed to subscribe to nfc events.");
+	if(status)
+		AFB_ERROR("Failed to subscribe to nfc events.");
 }
 
 static void on_nfc_started(void *closure, int status, struct json_object *result)
 {
-	if (!status)
-	{
+	if (!status) {
 		afb_service_call("nfc", "subscribe", NULL, on_nfc_subscribed, NULL);
 	}
-	else AFB_ERROR("Failed to start nfc polling.");
+	else
+		AFB_ERROR("Failed to start nfc polling.");
 }
 
 static int service_init()
 {
-	int rc;
-
 	agl_forgerock_setcb(on_forgerock_data);
 	event = afb_daemon_make_event("event");
 	if (!afb_event_is_valid(event))
@@ -243,7 +234,7 @@ static int service_init()
 static void on_nfc_target_add(struct json_object *object)
 {
 	struct json_object * json_uid;
-	char *uid;
+	const char *uid;
 
 	if (json_object_object_get_ex(object, "UID", &json_uid))
 	{
